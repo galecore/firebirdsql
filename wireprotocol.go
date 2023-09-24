@@ -27,21 +27,23 @@ import (
 	"bufio"
 	"bytes"
 	"container/list"
+	"context"
 	"crypto/rc4"
 	"crypto/sha256"
 	"database/sql/driver"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/kardianos/osext"
-	"gitlab.com/nyarla/go-crypt"
-	"golang.org/x/crypto/chacha20"
 	"math/big"
 	"net"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/kardianos/osext"
+	"gitlab.com/nyarla/go-crypt"
+	"golang.org/x/crypto/chacha20"
 	//"unsafe"
 )
 
@@ -184,6 +186,26 @@ func newWireProtocol(addr string, timezone string, charset string) (*wireProtoco
 
 	p.addr = addr
 	conn, err := net.Dial("tcp", p.addr)
+	if err != nil {
+		return nil, err
+	}
+
+	p.conn, err = newWireChannel(conn)
+	p.timezone = timezone
+	p.charset = charset
+	p.charsetLen()
+
+	return p, err
+}
+
+func newWireProtocolContext(ctx context.Context, addr string, timezone string, charset string) (*wireProtocol, error) {
+	p := new(wireProtocol)
+	p.buf = make([]byte, 0, BUFFER_LEN)
+
+	p.addr = addr
+
+	var dialer net.Dialer
+	conn, err := dialer.DialContext(ctx, "tcp", p.addr)
 	if err != nil {
 		return nil, err
 	}

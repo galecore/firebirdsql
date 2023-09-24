@@ -115,7 +115,7 @@ type firebirdConnector struct {
 	dsn *firebirdDsn
 }
 
-func (d *firebirdConnector) OpenConnector(dsns string) (driver.Connector, error) {
+func (fc *firebirdConnector) OpenConnector(dsns string) (driver.Connector, error) {
 	dsn, err := parseDSN(dsns)
 	if err != nil {
 		return nil, err
@@ -128,5 +128,5 @@ func (fc *firebirdConnector) Driver() driver.Driver {
 }
 
 func (fc *firebirdConnector) Connect(ctx context.Context) (driver.Conn, error) {
-	return newFirebirdsqlConn(fc.dsn)
+	return newFirebirdSQLConnContext(ctx, fc.dsn)
 }

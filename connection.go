@@ -132,12 +132,14 @@ func (fc *firebirdsqlConn) Query(query string, args []driver.Value) (rows driver
 }
 
 func newFirebirdsqlConn(dsn *firebirdDsn) (fc *firebirdsqlConn, err error) {
+	return newFirebirdSQLConnContext(context.Background(), dsn)
+}
 
-	wp, err := newWireProtocol(dsn.addr, dsn.options["timezone"], dsn.options["charset"])
+func createFirebirdsqlConn(dsn *firebirdDsn) (fc *firebirdsqlConn, err error) {
+	wp, err := newWireProtocolContext(context.Background(), dsn.addr, dsn.options["timezone"], dsn.options["charset"])
 	if err != nil {
 		return
 	}
-
 	column_name_to_lower := convertToBool(dsn.options["column_name_to_lower"], false)
 
 	clientPublic, clientSecret := getClientSeed()
@@ -152,7 +154,7 @@ func newFirebirdsqlConn(dsn *firebirdDsn) (fc *firebirdsqlConn, err error) {
 		return
 	}
 
-	err = wp.opAttach(dsn.dbName, dsn.user, dsn.passwd, dsn.options["role"])
+	err = wp.opCreate(dsn.dbName, dsn.user, dsn.passwd, dsn.options["role"])
 	if err != nil {
 		return
 	}
@@ -175,9 +177,8 @@ func newFirebirdsqlConn(dsn *firebirdDsn) (fc *firebirdsqlConn, err error) {
 	return fc, err
 }
 
-func createFirebirdsqlConn(dsn *firebirdDsn) (fc *firebirdsqlConn, err error) {
-
-	wp, err := newWireProtocol(dsn.addr, dsn.options["timezone"], dsn.options["charset"])
+func newFirebirdSQLConnContext(ctx context.Context, dsn *firebirdDsn) (fc *firebirdsqlConn, err error) {
+	wp, err := newWireProtocolContext(ctx, dsn.addr, dsn.options["timezone"], dsn.options["charset"])
 	if err != nil {
 		return
 	}
@@ -195,7 +196,7 @@ func createFirebirdsqlConn(dsn *firebirdDsn) (fc *firebirdsqlConn, err error) {
 		return
 	}
 
-	err = wp.opCreate(dsn.dbName, dsn.user, dsn.passwd, dsn.options["role"])
+	err = wp.opAttach(dsn.dbName, dsn.user, dsn.passwd, dsn.options["role"])
 	if err != nil {
 		return
 	}
